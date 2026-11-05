@@ -1,0 +1,37 @@
+# ---------------------------------------------------------------------------
+# destroy.yml -- MANUAL ONLY. Deletes everything Terraform created
+# (stops AWS charges). Run it from the Actions tab and type DESTROY to confirm.
+# ---------------------------------------------------------------------------
+name: Destroy
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: "Type DESTROY to confirm"
+        required: true
+
+env:
+  AWS_REGION: ap-south-1
+
+jobs:
+  destroy:
+    if: ${{ github.event.inputs.confirm == 'DESTROY' }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: terraform
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.10.5
+      - run: terraform init -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}"
+      - run: terraform destroy -auto-approve
+        env:
+          TF_VAR_alert_email: ${{ secrets.ALERT_EMAIL }}

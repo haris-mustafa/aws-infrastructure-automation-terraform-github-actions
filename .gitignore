@@ -1,0 +1,13 @@
+# Terraform local files (never commit state or provider binaries)
+.terraform/
+*.tfstate
+*.tfstate.*
+terraform.tfvars
+terraform/build/
+crash.log
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/

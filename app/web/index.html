@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<!--
+  Tiny static website served by nginx on the EC2 instance.
+  The text __API_URL__ below is replaced by Terraform (terraform/ec2.tf)
+  with the real API Gateway URL when the server is created.
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AWS DevOps Demo</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 560px; margin: 3rem auto; padding: 0 1rem; color: #222; }
+    .card { border: 1px solid #ddd; border-radius: 12px; padding: 1.25rem; margin-bottom: 1.25rem; }
+    #count { font-size: 3rem; font-weight: 700; }
+    button { padding: .5rem 1rem; border: 0; border-radius: 8px; background: #2563eb; color: #fff; cursor: pointer; }
+    #status { margin-top: .75rem; font-size: .9rem; }
+  </style>
+</head>
+<body>
+  <h1>AWS DevOps Demo</h1>
+
+  <div class="card">
+    <div>Total visits</div>
+    <div id="count">...</div>
+  </div>
+
+  <div class="card">
+    <h3>Upload a file to S3</h3>
+    <input type="file" id="file">
+    <button onclick="upload()">Upload</button>
+    <div id="status"></div>
+  </div>
+
+<script>
+  const API = "__API_URL__";   // replaced by Terraform
+
+  // 1) On page load: call POST /visit -> Lambda -> DynamoDB, show the new count.
+  fetch(API + "/visit", { method: "POST" })
+    .then(r => r.json())
+    .then(d => document.getElementById("count").textContent = d.visits)
+    .catch(() => document.getElementById("count").textContent = "error");
+
+  // 2) Upload: ask Lambda for a presigned URL, then PUT the file straight to S3.
+  async function upload() {
+    const status = document.getElementById("status");
+    const file = document.getElementById("file").files[0];
+    if (!file) { status.textContent = "Choose a file first."; return; }
+    try {
+      status.textContent = "Requesting upload link...";
+      const r = await fetch(API + "/upload-url?filename=" + encodeURIComponent(file.name));
+      const { uploadUrl, key } = await r.json();
+
+      status.textContent = "Uploading...";
+      const put = await fetch(uploadUrl, { method: "PUT", body: file });
+      status.textContent = put.ok ? "Uploaded as " + key + " (check your email!)" : "Upload failed: " + put.status;
+    } catch (e) {
+      status.textContent = "Error: " + e.message;
+    }
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+# Copy this file:  cp terraform.tfvars.example terraform.tfvars
+# then edit the values. terraform.tfvars is git-ignored.
+
+alert_email  = "you@example.com"   # REQUIRED: where SNS alerts are sent
+aws_region   = "ap-south-1"        # Mumbai (closest to Pakistan)
+project_name = "devops-demo"
+# instance_type   = "t3.small"
+# visit_milestone = 10
